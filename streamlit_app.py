@@ -32,7 +32,7 @@ if ingredients_list:
         sf_df = st.dataframe(data=smoothiefroot_response.json(), use_container_width=True)
       # st.write(ingredients_striing)
      
-      my_insert_stmt = """INSERT INTO smoothies.public.orders (ingredients, name_on_order)
+       my_insert_stmt = """INSERT INTO smoothies.public.orders (ingredients, name_on_order)
         VALUES ('""" + ingredients_string + """', '""" + name_on_order + """')"""
 
 
