@@ -25,24 +25,11 @@ if ingredient_list:
   for ingredient in ingredient_list:
     ingredients_string += ingredient + ' '
     
-       # Safely extract 'search_on' value from dataframe
-    search_on = pd_df.loc[pd_df['FRUIT_NAME'] == ingredient, 'SEARCH_ON'].iloc[0].lower()
-    api_url = f"https://my.smoothiefroot.com/api/fruit/{search_on}"
-
-    st.subheader(f"{ingredient} Nutrition Information")
-    st.write("API URL:", api_url)  # optional: for debugging
-
-    response = requests.get(api_url)
-
-    if response.status_code == 200:
-        try:
-            data = response.json()
-            st.dataframe(data, use_container_width=True)
-        except:
-            st.error("Error: Could not parse nutrition data.")
-    else:
-        st.error("Sorry, that fruit is not in our database.")
-
+    search_on = pd_df.loc[pd_df['FRUIT_NAME'] == ingredient, 'SEARCH_ON'].iloc[0].lower()   
+    st.subheader(ingredient + 'Nutrition Information')
+    smoothiefroot_response = requests.get("https://my.smoothiefroot.com/api/fruit/" + search_on)
+    
+    df_df = st.dataframe(data=smoothiefroot_response.json(), use_container_width=True)#evtl container entf.
     my_insert_stmt = """ insert into smoothies.public.orders(ingredients, name_on_order)
             values ('""" + ingredients_string + """', '""" + name_on_order + """')"""
 
@@ -50,6 +37,5 @@ if ingredient_list:
   if time_to_insert:
       session.sql(my_insert_stmt).collect()
       st.success(f'Your Smoothie is ordered, {name_on_order}!', icon="✅")
-
 
 
