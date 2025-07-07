@@ -20,42 +20,20 @@ ingredient_list = st.multiselect(
     max_selections=5
 )
 if ingredient_list:
-    ingredients_string = ''
+  ingredients_string = '' 
 
-    for ingredient in ingredient_list:
-        ingredients_string += ingredient + ' '
+  for ingredient in ingredient_list:
+    ingredients_string += ingredient + ' '
+    
+    search_on=pd_df.loc[pd_df['FRUIT_NAME'] == ingredient, 'SEARCH_ON'].iloc[0]    
+    st.subheader(ingredient + 'Nutrition Information')
+    smoothiefroot_response = requests.get("https://my.smoothiefroot.com/api/fruit/" + search_on)
+    
+    df_df = st.dataframe(data=smoothiefroot_response.json(), use_container_width=True)#evtl container entf.
+    my_insert_stmt = """ insert into smoothies.public.orders(ingredients, name_on_order)
+            values ('""" + ingredients_string + """', '""" + name_on_order + """')"""
 
-        search_result = pd_df.loc[pd_df['FRUIT_NAME'] == ingredient, 'SEARCH_ON']
-
-        if search_result.empty or pd.isna(search_result.iloc[0]):
-            st.warning(f"⚠️ {ingredient} has no API key (SEARCH_ON is missing). Skipping.")
-            continue
-
-        search_on = search_result.iloc[0].lower()
-        st.subheader(f"{ingredient} Nutrition Information")
-
-        try:
-            response = requests.get(f"https://my.smoothiefroot.com/api/fruit/{search_on}")
-
-            if response.status_code == 200:
-                st.dataframe(response.json(), use_container_width=True)
-
-            elif response.status_code == 404:
-                st.error(f"❌ {ingredient} is not available in the nutrition API. Skipping.")
-
-            else:
-                st.error(f"⚠️ Unexpected API error for {ingredient}: Status {response.status_code}")
-
-        except Exception as e:
-            st.error(f"💥 API request failed for {ingredient}: {e}")
-
-    # Insert smoothie order into Snowflake
-    my_insert_stmt = f"""
-        insert into smoothies.public.orders(ingredients, name_on_order)
-        values ('{ingredients_string.strip()}', '{name_on_order}')
-    """
-
-    time_to_insert = st.button('Submit Order')
-    if time_to_insert:
-        session.sql(my_insert_stmt).collect()
-        st.success(f"✅ Your Smoothie is ordered, {name_on_order}!")
+  time_to_insert = st.button('Submit Order')
+  if time_to_insert:
+      session.sql(my_insert_stmt).collect()
+      st.success(f'Your Smoothie is ordered, {name_on_order}!', icon="✅")
